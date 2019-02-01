@@ -1,4 +1,4 @@
-package config
+package main
 
 import "github.com/spf13/viper"
 
@@ -20,16 +20,4 @@ func newNode() *Node {
 	viper.SetDefault(cfgNodePassword, "equibit")
 
 	return miner
-}
-
-func (*Node) Host() string {
-	return viper.Get(cfgNodeHost).(string)
-}
-
-func (*Node) User() string {
-	return viper.Get(cfgNodeUser).(string)
-}
-
-func (*Node) Password() string {
-	return viper.Get(cfgNodePassword).(string)
 }

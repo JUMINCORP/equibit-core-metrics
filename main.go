@@ -1,11 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"time"
 
-	"../config"
-	"../export"
+	"./constrictor"
+	"./micrometrics"
+
 	"github.com/prometheus/client_golang/prometheus"
 	rpcclient "github.com/stevenroose/go-bitcoin-core-rpc"
 )
@@ -13,6 +15,17 @@ import (
 const programName = "equibit-core-metrics"
 
 var (
+	_ = constrictor.App("equibit-core-metrics", "Some Core Equibit Metrics", "Gaze lovingly into your Equibits", run)
+
+	rapper = constrictor.StringVar("rapper", "r", "Yeeun", "Cutest rapper")
+
+	prometheusAddress = constrictor.AddressPortVar("prometheus", "p", ":40012", "Address:Port to expose to Prometheus")
+	queryDelay        = constrictor.TimeDurationVar("time", "t", "30", "Delay between RPC calls to the miner")
+	label             = constrictor.StringVar("label", "l", "default", "Label to identify this miner's data")
+	node              = constrictor.AddressPortVar("node", "n", ":18331", "Address:Port of the node's RPC port")
+	username          = constrictor.StringVar("user", "u", "default", "Node username")
+	password          = constrictor.StringVar("pass", "", "default", "Node password")
+
 	equibitBalance = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "equibit_balance",
@@ -20,14 +33,18 @@ var (
 		},
 		[]string{"namespace", "account"},
 	)
-
-	cfg      *config.Config
-	exporter export.Exporter
+	exporter *micrometrics.PrometheusExporter
 )
 
 func init() {
-	cfg = config.NewConfig(programName)
-	exporter = export.NewPrometheus(cfg.Prometheus.Address())
+	fmt.Printf("Who the cutest rapper be?\n")
+	fmt.Printf("It be %s\n", rapper())
+
+	fmt.Printf("node %s\n", node())
+	fmt.Printf("username %s\n", username())
+	fmt.Printf("password %s\n", password())
+
+	exporter = micrometrics.NewPrometheusExporter(prometheusAddress())
 
 	// Metrics have to be registered to be exposed:
 	prometheus.MustRegister(equibitBalance)
@@ -72,9 +89,9 @@ func gather() {
 
 	// Connect to local bitcoin core RPC server using HTTP POST mode.
 	connCfg := &rpcclient.ConnConfig{
-		Host: cfg.Node.Host(),
-		User: cfg.Node.User(),
-		Pass: cfg.Node.Password(),
+		Host: node(),
+		User: username(),
+		Pass: password(),
 	}
 
 	//var wallet btcjson.InfoWalletResult
@@ -108,12 +125,18 @@ func gather() {
 	}
 }
 
-func main() {
+func run() {
+	fmt.Printf("rune username %s\n", username())
 	go func() {
 		for {
 			gather()
-			time.Sleep(time.Second * cfg.QueryDelay())
+			time.Sleep(time.Second * queryDelay())
 		}
 	}()
-	exporter.Setup()
+	//exporter.Setup()
+}
+
+func main() {
+	fmt.Printf("rune username %s\n", username())
+	constrictor.Launch()
 }
