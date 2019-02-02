@@ -2,7 +2,6 @@ package constrictor
 
 import (
 	"fmt"
-	"os"
 	"strconv"
 	"time"
 
@@ -10,45 +9,28 @@ import (
 	"github.com/spf13/viper"
 )
 
-//type App struct {
-//cobra.Command
-//}
-
 var (
 	app         = &cobra.Command{}
 	programName string
 )
 
-type runFunc func()
-
-func App(name string, shortDesc string, longDesc string, run runFunc) *cobra.Command {
+func App(name string, shortDesc string, longDesc string) error {
 	app.Use = name
 	app.Short = shortDesc
 	app.Long = longDesc
 	app.Run = func(cmd *cobra.Command, args []string) {
-		// Do Stuff Here
-		fmt.Printf("how??\n")
-		run()
+		// Do nothing except evaluate variables
 	}
+
 	programName = name
 
 	cobra.OnInitialize(readConfig)
-
-	return app
-}
-
-func Launch() {
-	if err := app.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	return app.Execute()
 }
 
 func readConfig() {
-	//cfg := new(config)
-
 	viper.SetConfigName(programName)
-	//viper.AddConfigPath(fmt.Sprintf("/etc/"))
+	viper.AddConfigPath(fmt.Sprintf("/etc/"))
 	viper.AddConfigPath(fmt.Sprintf("."))
 
 	viper.SetEnvPrefix(programName)

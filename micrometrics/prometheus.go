@@ -15,10 +15,12 @@ var (
 )
 
 type PrometheusExporter struct {
+	Exporter
 	address string
 }
 
-func NewPrometheusExporter(address string) *PrometheusExporter {
+//func NewPrometheusExporter(address string) *PrometheusExporter {
+func NewPrometheusExporter(address string) Exporter {
 	p := new(PrometheusExporter)
 	p.address = address
 	return p
@@ -35,7 +37,7 @@ func httpHandler() http.HandlerFunc {
 	}
 }
 
-func (p *PrometheusExporter) setup() {
+func (p *PrometheusExporter) Setup() {
 	http.Handle("/metrics", httpHandler())
 	log.Fatal(http.ListenAndServe(p.address, nil))
 }
@@ -72,7 +74,7 @@ func formatMetric(m Metric) string {
 	return sb.String()
 }
 
-func (p *PrometheusExporter) export(metrics []Metric) error {
+func (p *PrometheusExporter) Export(metrics []Metric) error {
 	var err error
 
 	mutex.Lock()
