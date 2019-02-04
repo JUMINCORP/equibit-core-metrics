@@ -1,12 +1,11 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"time"
 
-	"./constrictor"
-	"./micrometrics"
+	"github.com/jumincorp/constrictor"
+	"github.com/jumincorp/micrometrics"
 
 	rpcclient "github.com/stevenroose/go-bitcoin-core-rpc"
 )
@@ -14,8 +13,6 @@ import (
 const programName = "equibit-core-metrics"
 
 var (
-	rapper = constrictor.StringVar("rapper", "r", "Yeeun", "Cutest rapper")
-
 	label             = constrictor.StringVar("label", "l", "default", "Label to identify this miner's data")
 	node              = constrictor.AddressPortVar("node", "n", ":18331", "Address:Port of the node's RPC port")
 	username          = constrictor.StringVar("user", "u", "default", "Node username")
@@ -29,7 +26,6 @@ var (
 func init() {
 	constrictor.App("equibit-core-metrics", "Some Core Equibit Metrics", "Gaze lovingly into your Equibits")
 
-	fmt.Printf("Who the cutest rapper be? It be %s\n", rapper())
 	log.Printf("node %s u/p %s/%s prometheus %s\n", node(), username(), password(), prometheusAddress())
 
 	exporter = micrometrics.NewPrometheusExporter(prometheusAddress())
@@ -120,7 +116,6 @@ func gather() error {
 }
 
 func main() {
-	fmt.Printf("run2 cutest rapper %s\n", rapper())
 	go func() {
 		for {
 			if err := gather(); err != nil {
