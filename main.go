@@ -18,7 +18,7 @@ var (
 	username          = constrictor.StringVar("user", "u", "default", "Node username")
 	password          = constrictor.StringVar("pass", "", "default", "Node password")
 	prometheusAddress = constrictor.AddressPortVar("prometheus", "p", ":40012", "Address:Port to expose to Prometheus")
-	queryDelay        = constrictor.TimeDurationVar("time", "t", "30", "Delay between RPC calls to the miner")
+	queryDelay        = constrictor.TimeDurationVar("time", "t", "30s", "Delay between RPC calls to the miner")
 
 	exporter micrometrics.Exporter
 )
@@ -26,7 +26,7 @@ var (
 func init() {
 	constrictor.App("equibit-core-metrics", "Some Core Equibit Metrics", "Gaze lovingly into your Equibits")
 
-	log.Printf("node %s u/p %s/%s prometheus %s\n", node(), username(), password(), prometheusAddress())
+	log.Printf("node %s u/p %s/%s prometheus %s queryDelay %s\n", node(), username(), password(), prometheusAddress(), queryDelay())
 
 	exporter = micrometrics.NewPrometheusExporter(prometheusAddress())
 }
@@ -121,7 +121,7 @@ func main() {
 			if err := gather(); err != nil {
 				log.Printf("Error: %v\n", err)
 			}
-			time.Sleep(time.Second * queryDelay())
+			time.Sleep(queryDelay())
 		}
 	}()
 	exporter.Setup()
