@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/jumincorp/constrictor"
-	"github.com/jumincorp/micrometrics"
+	"github.com/jumincorp/micrometric"
 
-	rpcclient "github.com/stevenroose/go-bitcoin-core-rpc"
+	"github.com/btcsuite/btcd/rpcclient"
 )
 
 const programName = "equibit-core-metrics"
@@ -20,7 +20,7 @@ var (
 	prometheusAddress = constrictor.AddressPortVar("prometheus", "p", ":40012", "Address:Port to expose to Prometheus")
 	queryDelay        = constrictor.TimeDurationVar("time", "t", "30", "Delay between RPC calls to the miner")
 
-	exporter micrometrics.Exporter
+	exporter micrometric.Exporter
 )
 
 func init() {
@@ -28,7 +28,7 @@ func init() {
 
 	log.Printf("node %s u/p %s/%s prometheus %s\n", node(), username(), password(), prometheusAddress())
 
-	exporter = micrometrics.NewPrometheusExporter(prometheusAddress())
+	exporter = micrometric.NewPrometheusExporter(prometheusAddress())
 }
 
 func gather() error {
@@ -36,17 +36,20 @@ func gather() error {
 
 	// Connect to local bitcoin core RPC server using HTTP POST mode.
 	connCfg := &rpcclient.ConnConfig{
-		Host: node(),
-		User: username(),
-		Pass: password(),
+		Host:         node(),
+		User:         username(),
+		Pass:         password(),
+		DisableTLS:   true,
+		HTTPPostMode: true,
 	}
 
 	//var wallet btcjson.InfoWalletResult
 
 	// Notice the notification parameter is nil since notifications are
 	// not supported in HTTP POST mode.
-	client, err := rpcclient.New(connCfg)
+	client, err := rpcclient.New(connCfg, nil)
 	if err != nil {
+		log.Printf("New failed\n")
 		return err
 	}
 	defer client.Shutdown()
@@ -54,11 +57,12 @@ func gather() error {
 	// Get the current block count.
 	accounts, err := client.ListAccounts()
 	if err != nil {
+		log.Printf("ListAcc failed\n")
 		return err
 	}
 
 	log.Printf("acc %v", accounts)
-	var metrics = make([]micrometrics.Metric, len(accounts))
+	var metrics = make([]micrometric.Metric, len(accounts))
 
 	i := 0
 	total := 0
@@ -73,7 +77,7 @@ func gather() error {
 		labels["namespace"] = programName
 		labels["account"] = sanitizedAccountName
 
-		metrics[i] = micrometrics.Metric{Labels: labels, Name: "equibit_balance", Value: eqb}
+		metrics[i] = micrometric.Metric{Labels: labels, Name: "equibit_balance", Value: eqb}
 		i++
 
 		// Check transactions:
@@ -119,7 +123,7 @@ func main() {
 	go func() {
 		for {
 			if err := gather(); err != nil {
-				log.Printf("Error: %v\n", err)
+				log.Printf("Gather Error: %v\n", err)
 			}
 			time.Sleep(time.Second * queryDelay())
 		}
