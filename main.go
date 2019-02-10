@@ -111,7 +111,7 @@ func gather() error {
 	return nil
 }
 
-func run([]string) {
+func run([]string) error {
 	log.Printf("node %s u/p %s/%s prometheus %s\n", node(), username(), password(), prometheusAddress())
 	exporter = micrometric.NewPrometheusExporter(prometheusAddress())
 	go func() {
@@ -123,6 +123,7 @@ func run([]string) {
 		}
 	}()
 	exporter.Setup()
+	return nil
 }
 
 func main() {
