@@ -21,15 +21,8 @@ var (
 	queryDelay        = constrictor.TimeDurationVar("time", "t", "30", "Delay between RPC calls to the miner")
 
 	exporter micrometric.Exporter
+	app      = constrictor.App("equibit-core-metrics", "Some Core Equibit Metrics", "Gaze lovingly into your Equibits", run)
 )
-
-func init() {
-	constrictor.App("equibit-core-metrics", "Some Core Equibit Metrics", "Gaze lovingly into your Equibits")
-
-	log.Printf("node %s u/p %s/%s prometheus %s\n", node(), username(), password(), prometheusAddress())
-
-	exporter = micrometric.NewPrometheusExporter(prometheusAddress())
-}
 
 func gather() error {
 	log.Printf("gather\n")
@@ -49,7 +42,6 @@ func gather() error {
 	// not supported in HTTP POST mode.
 	client, err := rpcclient.New(connCfg, nil)
 	if err != nil {
-		log.Printf("New failed\n")
 		return err
 	}
 	defer client.Shutdown()
@@ -57,7 +49,6 @@ func gather() error {
 	// Get the current block count.
 	accounts, err := client.ListAccounts()
 	if err != nil {
-		log.Printf("ListAcc failed\n")
 		return err
 	}
 
@@ -66,6 +57,7 @@ func gather() error {
 
 	i := 0
 	total := 0
+
 	for name, amount := range accounts {
 		sanitizedAccountName := name
 		if sanitizedAccountName == "" {
@@ -119,7 +111,9 @@ func gather() error {
 	return nil
 }
 
-func main() {
+func run([]string) {
+	log.Printf("node %s u/p %s/%s prometheus %s\n", node(), username(), password(), prometheusAddress())
+	exporter = micrometric.NewPrometheusExporter(prometheusAddress())
 	go func() {
 		for {
 			if err := gather(); err != nil {
@@ -129,4 +123,8 @@ func main() {
 		}
 	}()
 	exporter.Setup()
+}
+
+func main() {
+	app.Execute()
 }
