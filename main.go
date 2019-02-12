@@ -18,10 +18,11 @@ var (
 	username          = constrictor.StringVar("user", "u", "default", "Node username")
 	password          = constrictor.StringVar("pass", "", "default", "Node password")
 	prometheusAddress = constrictor.AddressPortVar("prometheus", "p", ":40012", "Address:Port to expose to Prometheus")
-	queryDelay        = constrictor.TimeDurationVar("time", "t", "30", "Delay between RPC calls to the miner")
+	queryDelay        = constrictor.TimeDurationVar("time", "t", "30s", "Delay between RPC calls to the miner")
+
+	app = constrictor.NewApp("equibit-core-metrics", "Some Core Equibit Metrics", "Gaze lovingly into your Equibits", run)
 
 	exporter micrometric.Exporter
-	app      = constrictor.App("equibit-core-metrics", "Some Core Equibit Metrics", "Gaze lovingly into your Equibits", run)
 )
 
 func gather() error {
@@ -106,9 +107,7 @@ func gather() error {
 	log.Printf("total %v\n", total)
 
 	log.Printf("metrics %v\n", metrics)
-	exporter.Export(metrics)
-
-	return nil
+	return exporter.Export(metrics)
 }
 
 func run([]string) error {
@@ -119,11 +118,10 @@ func run([]string) error {
 			if err := gather(); err != nil {
 				log.Printf("Gather Error: %v\n", err)
 			}
-			time.Sleep(time.Second * queryDelay())
+			time.Sleep(queryDelay())
 		}
 	}()
-	exporter.Setup()
-	return nil
+	return exporter.Serve()
 }
 
 func main() {
